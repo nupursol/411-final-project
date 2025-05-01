@@ -1,5 +1,7 @@
 import pytest
 from weather.models.weather_model import WeatherModel, WeatherEntry 
+from weather.utils.weather_api_client import WeatherAPIClient
+
 
 @pytest.fixture()
 def weather_model():
