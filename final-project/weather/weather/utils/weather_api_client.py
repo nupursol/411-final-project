@@ -33,7 +33,7 @@ class WeatherAPIClient:
             "units": "metric"
         }
 
-        response = requests.get(cls.BASE_URL, params=params)
+        response = requests.get(cls.API_URL, params=params)
 
         if response.status_code != 200:
             logger.error(f"Failed to fetch weather data: {response.text}")
