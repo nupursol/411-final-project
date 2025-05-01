@@ -13,16 +13,22 @@ COPY .env /app/.env
 # Install any needed packages specified in requirements.txt
 # In production, you would want to ensure that any re-compiled packages
 # With the same version number are re-downloaded
-# RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install SQLite3
-RUN apt-get update && apt-get install -y sqlite3
+# Install SQLite3 and other system dependencies
+RUN apt-get update && apt-get install -y \
+    sqlite3 \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 # Add a shell script that loads the .env file and handles database creation
 COPY sql/create_db.sh /app/sql/create_db.sh
 COPY sql/init_db.sql /app/sql/init_db.sql
 RUN chmod +x /app/sql/create_db.sh
+
+# Create a non-root user for security
+RUN useradd -m appuser && chown -R appuser:appuser /app
+USER appuser
 
 # Define a volume for persisting the database
 VOLUME ["/app/db"]
