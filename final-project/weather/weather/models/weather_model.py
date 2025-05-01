@@ -36,18 +36,24 @@ class WeatherModel:
     def add_city(self, city: str) -> Dict:
         """Add a city and get its current weather."""
         try:
+            city_lower = city.lower()
+            logger.info(f"Adding city: {city_lower}")
+            logger.info(f"Using mock data: {self.use_mock_data}")
+            logger.info(f"Current weather data cities: {list(self.weather_data.keys())}")
+            
             if self.use_mock_data:
                 # Use mock data for testing
-                city_lower = city.lower()
                 if city_lower in self.mock_data:
                     weather_data = self.mock_data[city_lower]
                     self.weather_data[city_lower] = weather_data
+                    logger.info(f"Added mock data for {city_lower}: {weather_data}")
                     return weather_data
                 raise ValueError(f"Mock data not available for {city}")
             else:
                 # Use real API for production
                 weather_data = self.api_client.get_weather_data(city)
-                self.weather_data[city.lower()] = weather_data
+                self.weather_data[city_lower] = weather_data
+                logger.info(f"Added API data for {city_lower}: {weather_data}")
                 return weather_data
         except Exception as e:
             logger.error(f"Failed to add city: {str(e)}")
@@ -56,22 +62,34 @@ class WeatherModel:
     def get_city_weather(self, city: str) -> Dict:
         """Get current weather for a city."""
         city = city.lower()
+        logger.info(f"Getting weather for city: {city}")
+        logger.info(f"Using mock data: {self.use_mock_data}")
+        logger.info(f"Mock data cities: {list(self.mock_data.keys())}")
+        logger.info(f"Weather data cities: {list(self.weather_data.keys())}")
+        logger.info(f"Mock data for {city}: {self.mock_data.get(city)}")
+        logger.info(f"Weather data for {city}: {self.weather_data.get(city)}")
+        
+        # First check if we have the city in weather_data
+        if city in self.weather_data:
+            logger.info(f"Found city {city} in weather data")
+            return self.weather_data[city]
+            
         if self.use_mock_data:
+            # If not in weather_data, check mock data
             if city in self.mock_data:
+                logger.info(f"Found city {city} in mock data")
                 return self.mock_data[city]
+            logger.error(f"City {city} not found in mock data or weather data")
             raise ValueError(f"Mock data not available for {city}")
         else:
-            if city in self.weather_data:
-                # In production, always get fresh data
-                try:
-                    weather_data = self.api_client.get_weather_data(city)
-                    self.weather_data[city] = weather_data
-                    return weather_data
-                except Exception as e:
-                    logger.error(f"Failed to get fresh weather for {city}: {str(e)}")
-                    # Fall back to cached data if API call fails
-                    return self.weather_data[city]
-            raise ValueError(f"{city} not found")
+            # In production, try to get fresh data
+            try:
+                weather_data = self.api_client.get_weather_data(city)
+                self.weather_data[city] = weather_data
+                return weather_data
+            except Exception as e:
+                logger.error(f"Failed to get fresh weather for {city}: {str(e)}")
+                raise ValueError(f"Could not get weather for {city}: {str(e)}")
     
     def get_all_cities(self) -> List[str]:
         """Get list of all cities."""
@@ -96,6 +114,13 @@ class WeatherModel:
     def remove_city(self, city: str) -> None:
         """Remove a city."""
         city = city.lower()
+        logger.info(f"Removing city: {city}")
+        logger.info(f"Current weather data cities: {list(self.weather_data.keys())}")
+        
         if city not in self.weather_data:
+            logger.error(f"City {city} not found in weather data")
             raise ValueError(f"{city} not found")
+            
+        logger.info(f"Removing city {city} from weather data")
         del self.weather_data[city]
+        logger.info(f"Successfully removed city {city}")

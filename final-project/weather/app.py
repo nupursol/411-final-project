@@ -1,7 +1,4 @@
 from flask import Flask, request, jsonify, session
-from flask_sqlalchemy import SQLAlchemy
-from models.user_model import User
-from models.weather_model import WeatherModel
 from datetime import timedelta
 import os
 import logging
@@ -14,14 +11,21 @@ load_dotenv()
 app = Flask(__name__)
 
 # Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///db/weather.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///../db/weather.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev')  # Default to 'dev' only in development
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 
-# Initialize database and models
-db = SQLAlchemy(app)
-weather_model = WeatherModel(api_key=os.environ.get('OPENWEATHER_API_KEY'))
+# Import and initialize database
+from weather.models.user_model import db
+db.init_app(app)
+
+# Import models
+from weather.models.user_model import User
+from weather.models.weather_model import WeatherModel
+
+# Initialize weather model
+weather_model = WeatherModel(use_mock_data=os.environ.get('USE_MOCK_DATA', 'false').lower() == 'true')
 
 # Create database tables
 with app.app_context():
@@ -30,6 +34,18 @@ with app.app_context():
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+# Add a handler to output logs to stdout
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+# Also configure the weather model logger
+weather_logger = logging.getLogger('weather.models.weather_model')
+weather_logger.setLevel(logging.INFO)
+weather_logger.addHandler(handler)
 
 ##################################################
 # Authentication Routes
@@ -55,22 +71,37 @@ def create_account():
     """Create a new user account."""
     try:
         data = request.get_json()
+        logger.info(f"Received create account request with data: {data}")
+        
+        if not data:
+            logger.error("No JSON data received")
+            return jsonify({"status": "error", "message": "No data received"}), 400
+            
         username = data.get('username')
         password = data.get('password')
         
+        logger.info(f"Extracted username: {username}, password: {'*' * len(password) if password else 'None'}")
+        
         if not username or not password:
+            logger.error(f"Missing username or password. Username: {username}, Password: {'*' * len(password) if password else 'None'}")
             return jsonify({"status": "error", "message": "Username and password are required"}), 400
             
-        if User.query.filter_by(username=username).first():
+        logger.info(f"Checking if user {username} exists")
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            logger.error(f"User {username} already exists with id {existing_user.id}")
             return jsonify({"status": "error", "message": "Username already exists"}), 400
             
+        logger.info(f"Creating new user {username}")
         user = User(username=username)
         user.set_password(password)
         db.session.add(user)
+        logger.info("Attempting to commit to database")
         db.session.commit()
+        logger.info(f"Successfully created user {username}")
         return jsonify({"status": "success"}), 201
     except Exception as e:
-        logger.error(f"Error creating account: {str(e)}")
+        logger.error(f"Error creating account: {str(e)}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/login', methods=['POST'])
@@ -124,6 +155,58 @@ def update_password():
         logger.error(f"Error updating password: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/delete-account', methods=['POST'])
+def delete_account():
+    """Delete a user account."""
+    try:
+        data = request.get_json()
+        logger.info(f"Received delete account request with data: {data}")
+        
+        if not data:
+            logger.error("No JSON data received")
+            return jsonify({"status": "error", "message": "No data received"}), 400
+            
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            logger.error(f"Missing username or password. Username: {username}, Password: {'*' * len(password) if password else 'None'}")
+            return jsonify({"status": "error", "message": "Username and password are required"}), 400
+            
+        logger.info(f"Checking if user {username} exists")
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            logger.error(f"User {username} does not exist")
+            return jsonify({"status": "error", "message": "User does not exist"}), 404
+            
+        if not user.check_password(password):
+            logger.error(f"Invalid password for user {username}")
+            return jsonify({"status": "error", "message": "Invalid password"}), 401
+            
+        logger.info(f"Deleting user {username}")
+        db.session.delete(user)
+        db.session.commit()
+        logger.info(f"Successfully deleted user {username}")
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        logger.error(f"Error deleting account: {str(e)}", exc_info=True)
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/cleanup-db', methods=['POST'])
+def cleanup_db():
+    """Clean up the database by dropping all tables and recreating them."""
+    try:
+        logger.info("Cleaning up database...")
+        # Drop all tables
+        db.drop_all()
+        # Create all tables
+        db.create_all()
+        logger.info("Database cleaned up successfully")
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        logger.error(f"Error cleaning up database: {str(e)}", exc_info=True)
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 ##################################################
 # Weather Routes
 ##################################################
@@ -137,7 +220,9 @@ def add_weather_entry():
         if not city:
             return jsonify({"status": "error", "message": "City name is required"}), 400
         
+        logger.info(f"Adding weather entry for city: {city}")
         weather_data = weather_model.add_city(city)
+        logger.info(f"Successfully added weather data: {weather_data}")
         return jsonify({"status": "success", "data": weather_data}), 201
     except Exception as e:
         logger.error(f"Error adding city: {str(e)}")
@@ -147,9 +232,12 @@ def add_weather_entry():
 def get_weather_by_city(city):
     """Get current weather for a city."""
     try:
+        logger.info(f"Getting weather for city: {city}")
         weather_data = weather_model.get_city_weather(city)
+        logger.info(f"Successfully retrieved weather data: {weather_data}")
         return jsonify({"status": "success", "data": weather_data}), 200
     except ValueError as e:
+        logger.error(f"City not found: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 404
     except Exception as e:
         logger.error(f"Error getting weather: {str(e)}")
@@ -159,7 +247,9 @@ def get_weather_by_city(city):
 def get_weather_entries():
     """Get current weather for all cities."""
     try:
+        logger.info("Getting all weather entries")
         weather_data = weather_model.get_all_weather()
+        logger.info(f"Successfully retrieved all weather data: {weather_data}")
         return jsonify({"status": "success", "data": weather_data}), 200
     except Exception as e:
         logger.error(f"Error getting all weather: {str(e)}")
@@ -169,9 +259,12 @@ def get_weather_entries():
 def delete_weather_entry(city):
     """Remove a city."""
     try:
+        logger.info(f"Deleting weather entry for city: {city}")
         weather_model.remove_city(city)
+        logger.info(f"Successfully deleted weather entry for {city}")
         return jsonify({"status": "success", "message": f"{city} removed"}), 200
     except ValueError as e:
+        logger.error(f"City not found: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 404
     except Exception as e:
         logger.error(f"Error removing city: {str(e)}")

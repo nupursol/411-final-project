@@ -23,6 +23,8 @@ RUN mkdir -p db
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV SQLALCHEMY_DATABASE_URI=sqlite:///db/weather.db
+ENV PYTHONPATH=/app
+ENV USE_MOCK_DATA=true
 
 # Expose port
 EXPOSE 5001

@@ -54,9 +54,49 @@ check_db() {
 #
 ##########################################################
 
+# Function to delete a user if they exist
+delete_user() {
+  username=$1
+  password=$2
+
+  echo "Checking if user ($username) exists..."
+  response=$(curl -s -X POST "$BASE_URL/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"$username\", \"password\":\"$password\"}")
+
+  # If login fails with 401, user doesn't exist or invalid credentials
+  if echo "$response" | grep -q '"status": "error"'; then
+    echo "User does not exist or invalid credentials, proceeding with creation."
+    return 0
+  fi
+
+  # If login succeeds, user exists and we should delete them
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "User exists, attempting to delete..."
+    response=$(curl -s -X POST "$BASE_URL/delete-account" \
+      -H "Content-Type: application/json" \
+      -d "{\"username\":\"$username\", \"password\":\"$password\"}")
+    
+    if echo "$response" | grep -q '"status": "success"'; then
+      echo "User deleted successfully."
+      return 0
+    else
+      echo "Failed to delete existing user."
+      exit 1
+    fi
+  fi
+
+  # If we get here, something unexpected happened
+  echo "Unexpected response when checking user existence."
+  exit 1
+}
+
 create_user() {
   username=$1
   password=$2
+
+  # First try to delete the user if they exist
+  delete_user "$username" "$password"
 
   echo "Creating user ($username)..."
   response=$(curl -s -X POST "$BASE_URL/create-account" \
@@ -158,9 +198,11 @@ get_weather_entries() {
 
 get_weather_by_city() {
   city=$1
+  # URL encode spaces
+  encoded_city=$(echo "$city" | sed 's/ /%20/g')
 
   echo "Getting weather for $city..."
-  response=$(curl -s -X GET "$BASE_URL/weather/$city")
+  response=$(curl -s -X GET "$BASE_URL/weather/$encoded_city")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Weather retrieved successfully."
@@ -176,9 +218,11 @@ get_weather_by_city() {
 
 delete_weather_entry() {
   city=$1
+  # URL encode spaces
+  encoded_city=$(echo "$city" | sed 's/ /%20/g')
 
   echo "Deleting weather entry for $city..."
-  response=$(curl -s -X DELETE "$BASE_URL/weather/$city")
+  response=$(curl -s -X DELETE "$BASE_URL/weather/$encoded_city")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Weather entry deleted successfully."
@@ -188,8 +232,23 @@ delete_weather_entry() {
   fi
 }
 
+# Function to clean up the database
+cleanup_db() {
+  echo "Cleaning up database..."
+  response=$(curl -s -X POST "$BASE_URL/cleanup-db")
+  if echo "$response" | grep -q '"status": "success"'; then
+    echo "Database cleaned up successfully."
+  else
+    echo "Failed to clean up database."
+    exit 1
+  fi
+}
+
 # Main test sequence
 echo "Starting smoke test for Weather Application..."
+
+# Clean up database first
+cleanup_db
 
 # Health checks
 check_health
