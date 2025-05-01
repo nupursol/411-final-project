@@ -6,6 +6,29 @@ import requests
 RANDOM_ORG_BASE_URL = os.getenv("RANDOM_ORG_BASE_URL",
                                 "https://www.random.org/integers/?num=1&min=1&col=1&base=10&format=plain&rnd=new")
 
+def configure_logger(logger):
+    """
+    Configures the logger to write logs to a file and the console.
+
+    Args:
+        logger (logging.Logger): The logger to configure.
+    """
+    logger.setLevel(logging.INFO)
+
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(formatter)
+
+    fh = logging.FileHandler('app.log')
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(formatter)
+
+    logger.addHandler(ch)
+    logger.addHandler(fh)
+
+
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
