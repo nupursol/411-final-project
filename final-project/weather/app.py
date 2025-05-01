@@ -101,7 +101,11 @@ def update_password():
 
 @app.route('/weather', methods=['GET'])
 def list_weather_entries():
-    """Get all weather entries."""
+    """Get all weather entries.
+    
+    Returns:
+        JSON: List of weather entries with their details.
+    """
     logger.info("Getting all weather entries")
     try:
         entries = weather_model.get_all_weather_entries()
@@ -117,15 +121,16 @@ def list_weather_entries():
         logger.error(f"Error getting weather entries: {e}")
         return jsonify({"error": str(e)}), 500
 
-    Returns:
-        JSON: List of weather entries.
-    """
-    entries = weather_model.get_all_weather_entries()
-    return jsonify([entry.__dict__ for entry in entries]), 200
-
 @app.route('/weather/<int:weather_id>', methods=['GET'])
 def get_weather(weather_id):
-    """Get a specific weather entry by ID."""
+    """Get a specific weather entry by ID.
+    
+    Args:
+        weather_id (int): The ID of the weather entry to retrieve.
+        
+    Returns:
+        JSON: Weather entry details.
+    """
     logger.info(f"Getting weather entry with ID: {weather_id}")
     try:
         entry = weather_model.get_weather_entry_by_id(weather_id)
@@ -147,7 +152,11 @@ def get_weather(weather_id):
 
 @app.route('/weather', methods=['POST'])
 def add_weather_entry():
-    """Add a new weather entry."""
+    """Add a new weather entry.
+    
+    Returns:
+        JSON: The newly created weather entry details.
+    """
     if 'user_id' not in session:
         return jsonify({"error": "Not logged in."}), 401
 
@@ -177,7 +186,14 @@ def add_weather_entry():
 
 @app.route('/weather/<int:weather_id>', methods=['PUT'])
 def update_weather(weather_id):
-    """Update an existing weather entry."""
+    """Update an existing weather entry.
+    
+    Args:
+        weather_id (int): The ID of the weather entry to update.
+        
+    Returns:
+        JSON: The updated weather entry details.
+    """
     if 'user_id' not in session:
         return jsonify({"error": "Not logged in."}), 401
 
@@ -208,7 +224,14 @@ def update_weather(weather_id):
 
 @app.route('/weather/<int:weather_id>', methods=['DELETE'])
 def delete_weather(weather_id):
-    """Delete a weather entry."""
+    """Delete a weather entry.
+    
+    Args:
+        weather_id (int): The ID of the weather entry to delete.
+        
+    Returns:
+        JSON: Success message.
+    """
     if 'user_id' not in session:
         return jsonify({"error": "Not logged in."}), 401
 
@@ -225,7 +248,14 @@ def delete_weather(weather_id):
 
 @app.route('/weather/city/<string:city>', methods=['GET'])
 def get_weather_by_city(city):
-    """Get all weather entries for a specific city."""
+    """Get all weather entries for a specific city.
+    
+    Args:
+        city (str): The city name to search for.
+        
+    Returns:
+        JSON: List of weather entries for the specified city.
+    """
     logger.info(f"Getting weather entries for city: {city}")
     try:
         entries = weather_model.get_weather_entries_by_city(city)
@@ -244,7 +274,11 @@ def get_weather_by_city(city):
 
 @app.route('/weather/latest', methods=['GET'])
 def get_latest_weather():
-    """Get the most recent weather entry."""
+    """Get the most recent weather entry.
+    
+    Returns:
+        JSON: The most recent weather entry details.
+    """
     logger.info("Getting latest weather entry")
     try:
         entry = weather_model.get_latest_weather_entry()
