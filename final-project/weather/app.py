@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
-from weather.models.user_model import db, User
-from weather.models.weather_model import WeatherModel
+from models.user_model import User
+from models.weather_model import WeatherModel
 from datetime import timedelta
 import os
 import logging
@@ -21,7 +21,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 
 # Initialize database and models
 db = SQLAlchemy(app)
-weather_model = WeatherModel(use_mock_data=os.environ.get('USE_MOCK_DATA', 'false').lower() == 'true')
+weather_model = WeatherModel(api_key=os.environ.get('OPENWEATHER_API_KEY'))
 
 # Create database tables
 with app.app_context():
