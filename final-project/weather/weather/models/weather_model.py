@@ -1,11 +1,15 @@
 from dataclasses import dataclass
 import logging
+import random
 from typing import List
 from datetime import datetime
 
 from weather.utils.logger import configure_logger
-from weather.utils.api_utils import get_random
-from weather.utils.sql_utils import get_db_connection
+from weather.utils.weather_api import WeatherAPIClient  
+
+def get_random(n: int) -> int:
+    """Returns a random number between 1 and n (inclusive)."""
+    return random.randint(1, n)
 
 logger = logging.getLogger(__name__)
 configure_logger(logger)
@@ -59,31 +63,29 @@ class WeatherModel:
     # Weather Entry Management Functions
     ##################################################
 
-    def add_weather_entry(self, city: str, temperature: float, condition: str, humidity: int) -> WeatherEntry:
-        """Adds a new weather entry to the collection.
+    def add_weather_entry(self, city: str) -> WeatherEntry:
+        """Fetches weather data for the given city and adds a new weather entry.
 
         Args:
             city (str): The city name.
-            temperature (float): The temperature in Celsius.
-            condition (str): The weather condition.
-            humidity (int): The humidity percentage.
 
         Returns:
             WeatherEntry: The newly created weather entry.
 
         Raises:
-            ValueError: If any of the input parameters are invalid.
+            ValueError: If the weather data cannot be fetched.
         """
-        logger.info(f"Adding weather entry: {city}, {temperature}°C, {condition}, {humidity}%")
+        logger.info(f"Fetching weather data for: {city}")
 
-        if not city.strip():
-            raise ValueError("City must be a non-empty string")
-        if not condition.strip():
-            raise ValueError("Condition must be a non-empty string")
-        if not isinstance(temperature, (int, float)):
-            raise ValueError("Temperature must be a number")
-        if not (0 <= humidity <= 100):
-            raise ValueError("Humidity must be between 0 and 100")
+        # Fetch weather data from the API
+        weather_data = WeatherAPIClient.get_weather_data(city)
+
+        if not weather_data:
+            raise ValueError(f"Unable to fetch weather data for {city}")
+
+        temperature = weather_data["temperature"]
+        condition = weather_data["condition"]
+        humidity = weather_data["humidity"]
 
         weather_entry = WeatherEntry(
             id=self.current_id,
