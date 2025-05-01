@@ -37,7 +37,7 @@ def test_remove_entry_by_date(weather_model, sample_weather_list):
         weather_model.add_entry(entry)
     weather_model.remove_entry_by_date("2025-04-30")
     assert len(weather_model.entries) == 1
-    assert weather_model.entries[0].date == "2025-05-01"
+    assert weather_model.entries[0].date_recorded == "2025-05-01"
 
 def test_clear_weather_data(weather_model, sample_weather_entry1):
     weather_model.add_entry(sample_weather_entry1)
