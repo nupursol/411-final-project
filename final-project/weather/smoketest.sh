@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Define the base URL for the Flask API
+# Set base URL for the Flask API
 BASE_URL="http://localhost:5001"
+
+# Set mock data flag for testing
+export USE_MOCK_DATA=true
 
 # Flag to control whether to echo JSON output
 ECHO_JSON=false
@@ -23,14 +26,14 @@ done
 
 # Function to check the health of the service
 check_health() {
-  echo "Checking health status..."
-  curl -s -X GET "$BASE_URL/healthcheck" | grep -q '"status": "success"'
-  if [ $? -eq 0 ]; then
-    echo "Service is healthy."
-  else
-    echo "Health check failed."
-    exit 1
-  fi
+    echo "Checking health status..."
+    curl -s -X GET "$BASE_URL/healthcheck" | grep -q '"status": "success"'
+    if [ $? -eq 0 ]; then
+        echo "Service is healthy."
+    else
+        echo "Health check failed."
+        exit 1
+    fi
 }
 
 # Function to check the database connection
@@ -119,14 +122,11 @@ update_password() {
 
 add_weather_entry() {
   city=$1
-  temperature=$2
-  condition=$3
-  humidity=$4
 
   echo "Adding weather entry for $city..."
   response=$(curl -s -X POST "$BASE_URL/weather" \
     -H "Content-Type: application/json" \
-    -d "{\"city\":\"$city\", \"temperature\":$temperature, \"condition\":\"$condition\", \"humidity\":$humidity}")
+    -d "{\"city\":\"$city\"}")
 
   if echo "$response" | grep -q '"status": "success"'; then
     echo "Weather entry added successfully."
@@ -202,8 +202,8 @@ update_password "testuser" "testpass" "newpass"
 login_user "testuser" "newpass"
 
 # Weather entry tests
-add_weather_entry "New York" 20 "sunny" 50
-add_weather_entry "London" 15 "cloudy" 60
+add_weather_entry "New York"
+add_weather_entry "London"
 get_weather_entries
 get_weather_by_city "New York"
 delete_weather_entry "New York"

@@ -14,6 +14,7 @@ ENV SECRET_KEY=dev
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=development
 ENV SQLALCHEMY_DATABASE_URI=sqlite:////app/db/weather.db
+ENV OPENWEATHER_API_KEY=7b43adca34f4beb8351a7da85a3afc7e
 
 # Install any needed packages specified in requirements.txt
 # In production, you would want to ensure that any re-compiled packages

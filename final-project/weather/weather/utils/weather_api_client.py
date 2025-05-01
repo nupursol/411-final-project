@@ -1,52 +1,61 @@
 import requests
 import logging
 from datetime import datetime
-from weather.models.weather_model import WeatherEntry
-
-logger = logging.getLogger(__name__)
 
 class WeatherAPIClient:
-    """
-    A client for fetching weather data from the OpenWeatherMap API.
-    """
-
+    """Client for getting basic weather data from OpenWeather API."""
+    
     API_URL = "https://api.openweathermap.org/data/2.5/weather"
-    API_KEY = "bb347d0180e29ce8b5a6fbd2d4fd2349"
-
-    @classmethod
-    def get_weather_data(cls, city: str) -> WeatherEntry:
+    
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.logger = logging.getLogger(__name__)
+    
+    def get_weather_data(self, city):
         """
-        Fetches current weather data for the specified city.
-
+        Get current weather data for a city.
+        
         Args:
-            city (str): The name of the city.
-
+            city (str): The name of the city to get weather for.
+            
         Returns:
-            dict: A dictionary containing temperature, condition, and humidity.
-
+            dict: Weather data including temperature, condition, and humidity.
+            
         Raises:
             ValueError: If the API request fails or returns invalid data.
         """
-        params = {
-            "q": city,
-            "appid": cls.API_KEY,
-            "units": "metric"
-        }
-
-        response = requests.get(cls.API_URL, params=params)
-
-        if response.status_code != 200:
-            logger.error(f"Failed to fetch weather data: {response.text}")
-            raise ValueError(f"Could not fetch weather data for city: {city}")
-
-        data = response.json()
-        logger.debug(f"Weather API response: {data}")
-
-        return WeatherEntry(
-            id=0,  
-            city=data["name"],
-            temperature=data["main"]["temp"],
-            condition=data["weather"][0]["main"],
-            humidity=data["main"]["humidity"],
-            date_recorded=str(datetime.utcnow().date())
-        )
+        try:
+            params = {
+                "q": city,
+                "appid": self.api_key,
+                "units": "metric"  # Use metric units for temperature
+            }
+            
+            self.logger.info(f"Getting weather for city: {city}")
+            response = requests.get(self.API_URL, params=params)
+            
+            if response.status_code != 200:
+                self.logger.error(f"API request failed with status {response.status_code}: {response.text}")
+                raise ValueError(f"Failed to get weather data: {response.text}")
+            
+            data = response.json()
+            
+            # Extract relevant weather data
+            weather_data = {
+                "city": data["name"],
+                "temperature": data["main"]["temp"],
+                "condition": data["weather"][0]["main"],
+                "humidity": data["main"]["humidity"],
+                "wind_speed": data["wind"]["speed"],
+                "date_recorded": datetime.utcnow().isoformat()
+            }
+            
+            self.logger.info(f"Successfully got weather data for {city}")
+            return weather_data
+            
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"API request failed: {str(e)}")
+            raise ValueError(f"Failed to fetch weather data: {str(e)}")
+        except (KeyError, IndexError) as e:
+            self.logger.error(f"Invalid API response format: {str(e)}")
+            raise ValueError(f"Invalid weather data format: {str(e)}")
