@@ -2,8 +2,6 @@ import logging
 import os
 import requests
 
-from playlist.utils.logger import configure_logger
-
 
 RANDOM_ORG_BASE_URL = os.getenv("RANDOM_ORG_BASE_URL",
                                 "https://www.random.org/integers/?num=1&min=1&col=1&base=10&format=plain&rnd=new")
