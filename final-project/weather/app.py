@@ -16,11 +16,11 @@ app = Flask(__name__)
 # Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///db/weather.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev')  # Default to 'dev' only in development
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 
 # Initialize database and models
-db.init_app(app)
+db = SQLAlchemy(app)
 weather_model = WeatherModel(use_mock_data=os.environ.get('USE_MOCK_DATA', 'false').lower() == 'true')
 
 # Create database tables
