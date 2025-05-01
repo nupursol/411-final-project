@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class WeatherModel:
     """Simple in-memory model for storing weather data."""
-    
+
     def __init__(self, use_mock_data=False):
         self.api_client = WeatherAPIClient(os.environ.get("OPENWEATHER_API_KEY"))
         self.weather_data: Dict[str, Dict] = {}  # city -> weather data
@@ -88,7 +88,7 @@ class WeatherModel:
                 try:
                     weather_data = self.get_city_weather(city)
                     results.append(weather_data)
-    except Exception as e:
+                except Exception as e:
                     logger.error(f"Failed to get weather for {city}: {str(e)}")
                     continue
             return results
