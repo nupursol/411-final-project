@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import logging
-import sqlite3
+from typing import List
+from datetime import datetime
+
 from weather.utils.logger import configure_logger
 from weather.utils.api_utils import get_random
 from weather.utils.sql_utils import get_db_connection
@@ -9,15 +11,27 @@ logger = logging.getLogger(__name__)
 configure_logger(logger)
 
 @dataclass
-class Weather:
+class WeatherEntry:
+    """
+    A class to represent a weather entry.
+
+    Attributes:
+        id (int): The unique identifier for the weather entry.
+        city (str): The city name.
+        temperature (float): The temperature in Celsius.
+        condition (str): The weather condition (e.g., "sunny", "rainy").
+        humidity (int): The humidity percentage.
+        date_recorded (str): The date when the weather was recorded in ISO format.
+    """
     id: int
     city: str
-    temperature: float  # in Celsius
+    temperature: float
     condition: str
-    humidity: int  # percentage
-    date_recorded: str  # ISO format
+    humidity: int
+    date_recorded: str
 
     def __post_init__(self):
+        """Validates the weather entry data after initialization."""
         if not (0 <= self.humidity <= 100):
             raise ValueError(f"Humidity must be between 0 and 100, got {self.humidity}")
         if not self.date_recorded:
@@ -26,6 +40,187 @@ class Weather:
             raise ValueError("City cannot be empty")
         if not self.condition.strip():
             raise ValueError("Condition cannot be empty")
+
+class WeatherModel:
+    """
+    A class to manage a collection of weather entries.
+
+    Attributes:
+        weather_entries (List[WeatherEntry]): The list of weather entries.
+        current_id (int): The next available ID for new weather entries.
+    """
+
+    def __init__(self):
+        """Initializes the WeatherModel with an empty list of weather entries."""
+        self.weather_entries: List[WeatherEntry] = []
+        self.current_id = 1
+
+    ##################################################
+    # Weather Entry Management Functions
+    ##################################################
+
+    def add_weather_entry(self, city: str, temperature: float, condition: str, humidity: int) -> WeatherEntry:
+        """Adds a new weather entry to the collection.
+
+        Args:
+            city (str): The city name.
+            temperature (float): The temperature in Celsius.
+            condition (str): The weather condition.
+            humidity (int): The humidity percentage.
+
+        Returns:
+            WeatherEntry: The newly created weather entry.
+
+        Raises:
+            ValueError: If any of the input parameters are invalid.
+        """
+        logger.info(f"Adding weather entry: {city}, {temperature}°C, {condition}, {humidity}%")
+
+        if not city.strip():
+            raise ValueError("City must be a non-empty string")
+        if not condition.strip():
+            raise ValueError("Condition must be a non-empty string")
+        if not isinstance(temperature, (int, float)):
+            raise ValueError("Temperature must be a number")
+        if not (0 <= humidity <= 100):
+            raise ValueError("Humidity must be between 0 and 100")
+
+        weather_entry = WeatherEntry(
+            id=self.current_id,
+            city=city,
+            temperature=temperature,
+            condition=condition,
+            humidity=humidity,
+            date_recorded=datetime.now().isoformat()
+        )
+
+        self.weather_entries.append(weather_entry)
+        self.current_id += 1
+        return weather_entry
+
+    def remove_weather_entry(self, weather_id: int) -> None:
+        """Removes a weather entry by its ID.
+
+        Args:
+            weather_id (int): The ID of the weather entry to remove.
+
+        Raises:
+            ValueError: If no weather entry with the given ID exists.
+        """
+        logger.info(f"Removing weather entry with ID: {weather_id}")
+
+        for i, entry in enumerate(self.weather_entries):
+            if entry.id == weather_id:
+                self.weather_entries.pop(i)
+                return
+
+        raise ValueError(f"No weather entry found with ID: {weather_id}")
+
+    def get_all_weather_entries(self) -> List[WeatherEntry]:
+        """Returns all weather entries.
+
+        Returns:
+            List[WeatherEntry]: A list of all weather entries.
+        """
+        logger.info("Getting all weather entries")
+        return self.weather_entries
+
+    def get_weather_entry_by_id(self, weather_id: int) -> WeatherEntry:
+        """Returns a weather entry by its ID.
+
+        Args:
+            weather_id (int): The ID of the weather entry to retrieve.
+
+        Returns:
+            WeatherEntry: The weather entry with the given ID.
+
+        Raises:
+            ValueError: If no weather entry with the given ID exists.
+        """
+        logger.info(f"Getting weather entry with ID: {weather_id}")
+
+        for entry in self.weather_entries:
+            if entry.id == weather_id:
+                return entry
+
+        raise ValueError(f"No weather entry found with ID: {weather_id}")
+
+    def update_weather_entry(self, weather_id: int, city: str = None, temperature: float = None,
+                           condition: str = None, humidity: int = None) -> WeatherEntry:
+        """Updates a weather entry with new values.
+
+        Args:
+            weather_id (int): The ID of the weather entry to update.
+            city (str, optional): The new city name.
+            temperature (float, optional): The new temperature.
+            condition (str, optional): The new weather condition.
+            humidity (int, optional): The new humidity percentage.
+
+        Returns:
+            WeatherEntry: The updated weather entry.
+
+        Raises:
+            ValueError: If no weather entry with the given ID exists or if any of the new values are invalid.
+        """
+        logger.info(f"Updating weather entry with ID: {weather_id}")
+
+        for i, entry in enumerate(self.weather_entries):
+            if entry.id == weather_id:
+                if city is not None:
+                    if not city.strip():
+                        raise ValueError("City must be a non-empty string")
+                    entry.city = city
+                if temperature is not None:
+                    if not isinstance(temperature, (int, float)):
+                        raise ValueError("Temperature must be a number")
+                    entry.temperature = temperature
+                if condition is not None:
+                    if not condition.strip():
+                        raise ValueError("Condition must be a non-empty string")
+                    entry.condition = condition
+                if humidity is not None:
+                    if not (0 <= humidity <= 100):
+                        raise ValueError("Humidity must be between 0 and 100")
+                    entry.humidity = humidity
+
+                entry.date_recorded = datetime.now().isoformat()
+                return entry
+
+        raise ValueError(f"No weather entry found with ID: {weather_id}")
+
+    def get_weather_entries_by_city(self, city: str) -> List[WeatherEntry]:
+        """Returns all weather entries for a given city.
+
+        Args:
+            city (str): The city name to search for.
+
+        Returns:
+            List[WeatherEntry]: A list of weather entries for the given city.
+        """
+        logger.info(f"Getting weather entries for city: {city}")
+        return [entry for entry in self.weather_entries if entry.city.lower() == city.lower()]
+
+    def get_latest_weather_entry(self) -> WeatherEntry:
+        """Returns the most recent weather entry.
+
+        Returns:
+            WeatherEntry: The most recent weather entry.
+
+        Raises:
+            ValueError: If there are no weather entries.
+        """
+        logger.info("Getting latest weather entry")
+
+        if not self.weather_entries:
+            raise ValueError("No weather entries available")
+
+        return max(self.weather_entries, key=lambda x: x.date_recorded)
+
+    def clear_all_entries(self) -> None:
+        """Removes all weather entries."""
+        logger.info("Clearing all weather entries")
+        self.weather_entries = []
+        self.current_id = 1
 
 def create_weather_entry(city: str, temperature: float, condition: str, humidity: int, date_recorded: str) -> None:
     logger.info(f"Creating weather entry: {city}, {temperature}°C, {condition}, {humidity}%, {date_recorded}")
@@ -71,7 +266,7 @@ def delete_weather_entry(weather_id: int) -> None:
         logger.error(f"Error deleting weather entry: {e}")
         raise e
 
-def get_weather_by_id(weather_id: int) -> Weather:
+def get_weather_by_id(weather_id: int) -> WeatherEntry:
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -82,7 +277,7 @@ def get_weather_by_id(weather_id: int) -> Weather:
             """, (weather_id,))
             row = cursor.fetchone()
             if row:
-                return Weather(*row)
+                return WeatherEntry(*row)
             else:
                 raise ValueError(f"Weather entry ID {weather_id} not found.")
     except sqlite3.Error as e:
@@ -114,14 +309,14 @@ def get_all_weather_entries() -> list[dict]:
         logger.error(f"Error retrieving weather entries: {e}")
         raise e
 
-def get_random_weather_entry() -> Weather:
+def get_random_weather_entry() -> WeatherEntry:
     try:
         entries = get_all_weather_entries()
         if not entries:
             raise ValueError("No weather data available")
         index = get_random(len(entries))
         selected = entries[index - 1]
-        return Weather(
+        return WeatherEntry(
             id=selected["id"],
             city=selected["city"],
             temperature=selected["temperature"],
