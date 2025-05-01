@@ -56,10 +56,12 @@ class WeatherModel:
     def get_city_weather(self, city: str) -> Dict:
         """Get current weather for a city."""
         city = city.lower()
-        if city in self.weather_data:
-            if self.use_mock_data:
-                return self.weather_data[city]
-            else:
+        if self.use_mock_data:
+            if city in self.mock_data:
+                return self.mock_data[city]
+            raise ValueError(f"Mock data not available for {city}")
+        else:
+            if city in self.weather_data:
                 # In production, always get fresh data
                 try:
                     weather_data = self.api_client.get_weather_data(city)
@@ -69,7 +71,7 @@ class WeatherModel:
                     logger.error(f"Failed to get fresh weather for {city}: {str(e)}")
                     # Fall back to cached data if API call fails
                     return self.weather_data[city]
-        raise ValueError(f"{city} not found")
+            raise ValueError(f"{city} not found")
     
     def get_all_cities(self) -> List[str]:
         """Get list of all cities."""
@@ -86,7 +88,7 @@ class WeatherModel:
                 try:
                     weather_data = self.get_city_weather(city)
                     results.append(weather_data)
-                except Exception as e:
+    except Exception as e:
                     logger.error(f"Failed to get weather for {city}: {str(e)}")
                     continue
             return results

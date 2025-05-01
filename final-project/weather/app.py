@@ -6,13 +6,17 @@ from datetime import timedelta
 import os
 import logging
 from sqlalchemy import text
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 
 # Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///db/weather.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "dev")
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 
 # Initialize database and models
