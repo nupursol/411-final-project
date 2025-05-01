@@ -62,6 +62,15 @@ class WeatherModel:
     ##################################################
     # Weather Entry Management Functions
     ##################################################
+    def get_entry_by_date(self, date_str: str) -> WeatherEntry:
+        for entry in self.weather_entries:
+            if entry.date_recorded.startswith(date_str):  
+                return entry
+        raise ValueError(f"No entry found for {date_str}")
+
+    def check_if_empty(self) -> None:
+        if not self.weather_entries:
+            raise ValueError("Weather data is empty")
 
     def add_weather_entry(self, city: str) -> WeatherEntry:
         """Fetches weather data for the given city and adds a new weather entry.
