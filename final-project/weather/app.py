@@ -5,44 +5,35 @@ import logging
 from sqlalchemy import text
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 
-# Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///../db/weather.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev')  # Default to 'dev' only in development
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev') 
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 
-# Import and initialize database
 from weather.models.user_model import db
 db.init_app(app)
 
-# Import models
 from weather.models.user_model import User
 from weather.models.weather_model import WeatherModel
 
-# Initialize weather model
 weather_model = WeatherModel(use_mock_data=os.environ.get('USE_MOCK_DATA', 'false').lower() == 'true')
 
-# Create database tables
 with app.app_context():
     db.create_all()
 
-# Configure logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# Add a handler to output logs to stdout
 handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# Also configure the weather model logger
 weather_logger = logging.getLogger('weather.models.weather_model')
 weather_logger.setLevel(logging.INFO)
 weather_logger.addHandler(handler)
@@ -197,9 +188,7 @@ def cleanup_db():
     """Clean up the database by dropping all tables and recreating them."""
     try:
         logger.info("Cleaning up database...")
-        # Drop all tables
         db.drop_all()
-        # Create all tables
         db.create_all()
         logger.info("Database cleaned up successfully")
         return jsonify({"status": "success"}), 200
