@@ -80,6 +80,6 @@ def test_not_empty_check(weather_model, sample_weather_entry1):
 
 def test_update_weather_entry(weather_model, sample_weather_entry1):
     weather_model.add_entry(sample_weather_entry1)
-    updated = WeatherEntry(id=1, city="SomeCity", temperature=22.5, condition="Sunny", humidity=50, date_recorded="2025-04-30")
+    updated = WeatherEntry(id=1, city="SomeCity", temperature=25.0, condition="Sunny", humidity=50, date_recorded="2025-04-30")
     weather_model.update_entry("2025-04-30", updated)
     assert weather_model.get_entry_by_date("2025-04-30").temperature == 25.0
