@@ -8,11 +8,11 @@ def weather_model():
 
 @pytest.fixture
 def sample_weather_entry1():
-    return WeatherEntry(date="2025-04-30", temperature=22.5, condition="Sunny")
+    return WeatherEntry(id=1, city="SomeCity", temperature=22.5, condition="Sunny", humidity=50, date_recorded="2025-04-30")
 
 @pytest.fixture
 def sample_weather_entry2():
-    return WeatherEntry(date="2025-05-01", temperature=18.0, condition="Rainy")
+    return WeatherEntry(id=2, city="SomeCity2", temperature=18.0, condition="Rainy", humidity=30, date_recorded="2025-05-01")
 
 @pytest.fixture
 def sample_weather_list(sample_weather_entry1, sample_weather_entry2):
