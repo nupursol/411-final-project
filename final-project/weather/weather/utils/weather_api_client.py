@@ -14,13 +14,10 @@ class WeatherAPIClient:
     def get_weather_data(self, city):
         """
         Get current weather data for a city.
-        
         Args:
             city (str): The name of the city to get weather for.
-            
         Returns:
             dict: Weather data including temperature, condition, and humidity.
-            
         Raises:
             ValueError: If the API request fails or returns invalid data.
         """

@@ -34,7 +34,13 @@ class WeatherModel:
         }
     
     def add_city(self, city: str) -> Dict:
-        """Add a city and get its current weather."""
+        """ Add a city and retrieve its current weather data.
+        Args:
+            city (str): The name of the city to add.
+        Returns:
+            dict: Weather data for the added city including temperature, condition, etc.
+        Raises:
+            ValueError: If weather data cannot be retrieved or city is invalid."""
         try:
             city_lower = city.lower()
             logger.info(f"Adding city: {city_lower}")
@@ -58,9 +64,15 @@ class WeatherModel:
         except Exception as e:
             logger.error(f"Failed to add city: {str(e)}")
             raise ValueError(f"Could not get weather for {city}: {str(e)}")
-    
+
     def get_city_weather(self, city: str) -> Dict:
-        """Get current weather for a city."""
+        """Retrieve current weather data for a specific city.
+        Args:
+            city (str): The name of the city to get weather for.
+        Returns:
+            dict: Weather data including temperature, condition, and humidity.
+        Raises:
+            ValueError: If weather data is not available or API call fails."""
         city = city.lower()
         logger.info(f"Getting weather for city: {city}")
         logger.info(f"Using mock data: {self.use_mock_data}")
@@ -90,13 +102,19 @@ class WeatherModel:
             except Exception as e:
                 logger.error(f"Failed to get fresh weather for {city}: {str(e)}")
                 raise ValueError(f"Could not get weather for {city}: {str(e)}")
-    
+
     def get_all_cities(self) -> List[str]:
-        """Get list of all cities."""
+        """Get a list of all stored city names.
+        Returns:
+            list: A list of city names (str) currently stored in memory."""
         return list(self.weather_data.keys())
-    
+
     def get_all_weather(self) -> List[Dict]:
-        """Get current weather for all cities."""
+        """Get current weather data for all stored cities.
+        Returns:
+            list: A list of weather data dictionaries for each stored city.
+        Raises:
+            ValueError: If API calls fail while refreshing weather data in production mode."""
         if self.use_mock_data:
             return list(self.weather_data.values())
         else:
@@ -110,9 +128,13 @@ class WeatherModel:
                     logger.error(f"Failed to get weather for {city}: {str(e)}")
                     continue
             return results
-    
+
     def remove_city(self, city: str) -> None:
-        """Remove a city."""
+        """Remove a city and its weather data from the model.
+        Args:
+            city (str): The name of the city to remove.
+        Raises:
+            ValueError: If the city is not found in stored weather data"""
         city = city.lower()
         logger.info(f"Removing city: {city}")
         logger.info(f"Current weather data cities: {list(self.weather_data.keys())}")
