@@ -1,15 +1,24 @@
-DROP TABLE IF EXISTS songs;
-CREATE TABLE songs (
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS weather_entries;
+
+-- Create users table
+CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    artist TEXT NOT NULL,
-    title TEXT NOT NULL,
-    year INTEGER NOT NULL CHECK(year >= 1900),
-    genre TEXT NOT NULL,
-    duration INTEGER NOT NULL CHECK(duration > 0),
-    play_count INTEGER DEFAULT 0,
-    UNIQUE(artist, title, year)
+    username VARCHAR(80) UNIQUE NOT NULL,
+    password_hash VARCHAR(128) NOT NULL
 );
 
-CREATE INDEX idx_songs_artist_title ON songs(artist, title);
-CREATE INDEX idx_songs_year ON songs(year);
-CREATE INDEX idx_songs_play_count ON songs(play_count);
+-- Create weather_entries table
+CREATE TABLE weather_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    city TEXT NOT NULL,
+    temperature REAL NOT NULL,
+    condition TEXT NOT NULL,
+    humidity INTEGER NOT NULL CHECK(humidity >= 0 AND humidity <= 100),
+    date_recorded TEXT NOT NULL
+);
+
+-- Create indexes for better query performance
+CREATE INDEX idx_weather_entries_city ON weather_entries(city);
+CREATE INDEX idx_weather_entries_date ON weather_entries(date_recorded);

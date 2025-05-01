@@ -7,8 +7,13 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Copy the env file to the container
-COPY .env /app/.env
+# Set environment variables
+ENV CREATE_DB=true
+ENV DB_PATH=/app/db/weather.db
+ENV SECRET_KEY=dev
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=development
+ENV SQLALCHEMY_DATABASE_URI=sqlite:////app/db/weather.db
 
 # Install any needed packages specified in requirements.txt
 # In production, you would want to ensure that any re-compiled packages
@@ -29,15 +34,17 @@ COPY sql/init_db.sql /app/sql/init_db.sql
 RUN chmod +x /app/entrypoint.sh && \
     chmod +x /app/sql/create_db.sh
 
-# Create a non-root user for security
-RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
+# Create and set permissions for the db directory
+RUN mkdir -p /app/db && \
+    chmod 777 /app/db && \
+    touch /app/db/weather.db && \
+    chmod 666 /app/db/weather.db
 
 # Define a volume for persisting the database
 VOLUME ["/app/db"]
 
-# Make port 5000 available to the world outside this container
-EXPOSE 5000
+# Make port 5001 available to the world outside this container
+EXPOSE 5001
 
 # Run the entrypoint script when the container launches
 CMD ["/app/entrypoint.sh"]

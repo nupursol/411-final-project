@@ -87,24 +87,13 @@ class WeatherModel:
         logger.info(f"Fetching weather data for: {city}")
 
         # Fetch weather data from the API
-        weather_data = WeatherAPIClient.get_weather_data(city)
+        weather_entry = WeatherAPIClient.get_weather_data(city)
 
-        if not weather_data:
+        if not weather_entry:
             raise ValueError(f"Unable to fetch weather data for {city}")
 
-        temperature = weather_data["temperature"]
-        condition = weather_data["condition"]
-        humidity = weather_data["humidity"]
-
-        weather_entry = WeatherEntry(
-            id=self.current_id,
-            city=city,
-            temperature=temperature,
-            condition=condition,
-            humidity=humidity,
-            date_recorded=datetime.now().isoformat()
-        )
-
+        # Update the entry with the current ID
+        weather_entry.id = self.current_id
         self.weather_entries.append(weather_entry)
         self.current_id += 1
         return weather_entry
