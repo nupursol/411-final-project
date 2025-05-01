@@ -111,5 +111,3 @@ This application provides a simple RESTful API for retrieving, storing, and mana
     curl -X DELETE http://localhost:5000/weather/London
     ```
 
-### Screenshots of Unit Tests and Smoketests Passing ###
-[ADD IMAGES HERE]
