@@ -1,5 +1,7 @@
 import requests
 import logging
+from datetime import datetime
+from weather.models.weather_model import WeatherEntry
 
 logger = logging.getLogger(__name__)
 
@@ -11,8 +13,8 @@ class WeatherAPIClient:
     API_URL = "https://api.openweathermap.org/data/2.5/weather"
     API_KEY = "bb347d0180e29ce8b5a6fbd2d4fd2349"
 
-    @staticmethod
-    def get_weather_data(city: str) -> dict:
+    @classmethod
+    def get_weather_data(cls, city: str) -> WeatherEntry:
         """
         Fetches current weather data for the specified city.
 
@@ -27,28 +29,24 @@ class WeatherAPIClient:
         """
         params = {
             "q": city,
-            "appid": WeatherAPIClient.API_KEY,
+            "appid": cls.API_KEY,
             "units": "metric"
         }
 
-        try:
-            response = requests.get(WeatherAPIClient.API_URL, params=params)
-            response.raise_for_status()
-            data = response.json()
+        response = requests.get(cls.BASE_URL, params=params)
 
-            temperature = data["main"]["temp"]
-            condition = data["weather"][0]["description"]
-            humidity = data["main"]["humidity"]
+        if response.status_code != 200:
+            logger.error(f"Failed to fetch weather data: {response.text}")
+            raise ValueError(f"Could not fetch weather data for city: {city}")
 
-            return {
-                "temperature": temperature,
-                "condition": condition,
-                "humidity": humidity
-            }
+        data = response.json()
+        logger.debug(f"Weather API response: {data}")
 
-        except requests.RequestException as e:
-            logger.error(f"Error fetching weather data for {city}: {e}")
-            return None
-        except (KeyError, TypeError) as e:
-            logger.error(f"Malformed data received for {city}: {e}")
-            return None
+        return WeatherEntry(
+            id=0,  
+            city=data["name"],
+            temperature=data["main"]["temp"],
+            condition=data["weather"][0]["main"],
+            humidity=data["main"]["humidity"],
+            date_recorded=str(datetime.utcnow().date())
+        )
