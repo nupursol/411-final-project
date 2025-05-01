@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, session, make_response
 from flask_sqlalchemy import SQLAlchemy
-from models.user_model import db, User
-from models.weather_model import WeatherModel, WeatherEntry
+from weather.models.user_model import db, User
+from weather.models.weather_model import WeatherModel, WeatherEntry
 from datetime import timedelta
 import os
 import logging
@@ -18,6 +18,10 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 db.init_app(app)
 weather_model = WeatherModel()
 
+# Create database tables
+with app.app_context():
+    db.create_all()
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -30,7 +34,7 @@ logger.setLevel(logging.INFO)
 def healthcheck():
     """Health check route to verify the service is running."""
     logger.info("Health check endpoint hit")
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "success"}), 200
 
 @app.route('/create-account', methods=['POST'])
 def create_account():
@@ -297,11 +301,5 @@ def get_latest_weather():
         logger.error(f"Error getting latest weather entry: {e}")
         return jsonify({"error": str(e)}), 500
 
-
-@app.before_first_request
-def create_tables():
-    """Create database tables if they don't exist."""
-    db.create_all()
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

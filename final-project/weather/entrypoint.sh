@@ -2,7 +2,10 @@
 
 # Load the environment variables from .env file
 if [ -f .env ]; then
-    export $(cat .env | xargs)
+    # Remove comments and empty lines, then export variables
+    grep -v '^#' .env | grep -v '^$' | while read -r line; do
+        export "$line"
+    done
 fi
 
 # Check if CREATE_DB is true, and run the database creation script if so

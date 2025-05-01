@@ -24,7 +24,10 @@ RUN apt-get update && apt-get install -y \
 # Add a shell script that loads the .env file and handles database creation
 COPY sql/create_db.sh /app/sql/create_db.sh
 COPY sql/init_db.sql /app/sql/init_db.sql
-RUN chmod +x /app/sql/create_db.sh
+
+# Make scripts executable
+RUN chmod +x /app/entrypoint.sh && \
+    chmod +x /app/sql/create_db.sh
 
 # Create a non-root user for security
 RUN useradd -m appuser && chown -R appuser:appuser /app
