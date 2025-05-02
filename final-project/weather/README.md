@@ -1,4 +1,5 @@
 # Weather API Application #
+Completed by: Prashant Gangesar, Wesley Park, Nupur Solanki
 
 ### Overview ###
 This application provides a simple RESTful API for retrieving, storing, and managing weather data for various cities. It supports mock data for testing and integrates with the OpenWeatherMap API for real-time weather data in production mode.
@@ -110,4 +111,116 @@ This application provides a simple RESTful API for retrieving, storing, and mana
     ```json
     curl -X DELETE http://localhost:5000/weather/London
     ```
+5. Get all cities
+    1. Path: /cities
+    2. Request Type: GET
+    3. Purpose: Retrieve a list of all cities currently stored.
+    4. Request Format: None
+    5. Response Format:
 
+    ```json
+    {
+      "status": "success",
+      "data": ["New York", "London"]
+    }
+
+    ```
+
+    6. Example cURL:
+
+    ```json
+    curl http://localhost:5000/cities
+    ```
+6. Create Account
+    1. Path: /create-account
+    2. Request Type: POST
+    3. Purpose: Register a new user account.
+    4. Request Format (JSON body):
+  
+     ```json
+    {
+      "username": "alice",
+      "password": "secret123"
+    }
+
+    ``` 
+    5. Response Format:
+
+    ```json
+    {
+      "status": "success"
+    }
+
+
+    ```
+
+    6. Example cURL:
+
+    ```json
+    curl -X POST http://localhost:5000/create-account -H "Content-Type: application/json" -d '{"username": "alice", "password": "secret123"}'
+    ```
+7. Login
+    1. Path: /login
+    2. Request Type: POST
+    3. Purpose: Authenticate a user and start a session.
+    4. Request Format (JSON body):
+  
+     ```json
+    {
+      "username": "alice",
+      "password": "secret123"
+    }
+
+    ``` 
+    5. Response Format:
+
+    ```json
+    {
+      "status": "success"
+    }
+
+    ```
+
+    6. Example cURL:
+
+    ```json
+    curl -X DELETE http://localhost:5000/weather/London
+    ```
+8. Remove a City
+    1. Path: /weather/<city>
+    2. Request Type: DELETE
+    3. Purpose: Remove a city and its weather data from storage.
+    4. Request Format: URL path parameter
+    5. Response Format:
+
+    ```json
+    {
+      "message": "City london removed successfully"
+    }
+
+    ```
+
+    6. Example cURL:
+
+    ```json
+    curl -X POST http://localhost:5000/login -H "Content-Type: application/json" -d '{"username": "alice", "password": "secret123"}'
+    ```
+9. Get all cities
+    1. Path: /weather/<city>
+    2. Request Type: DELETE
+    3. Purpose: Remove a city and its weather data from storage.
+    4. Request Format: URL path parameter
+    5. Response Format:
+
+    ```json
+    {
+      "message": "City london removed successfully"
+    }
+
+    ```
+
+    6. Example cURL:
+
+    ```json
+    curl -X DELETE http://localhost:5000/weather/London
+    ```
